@@ -1,3 +1,5 @@
+There are different branches for each step. The branches are incremental i.e. **step 2** will be having all the code of **step 1** plus code for this step.
+
 **The movieapp contains 3 services that enable the users to rate any movie(actors, etc coming soon)**
 
 To run the hashicorp/consul, do the following
