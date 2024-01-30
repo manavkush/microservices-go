@@ -4,26 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"math/rand"
 	"net/http"
 
 	"movieexample.com/movie/internal/gateway"
+	"movieexample.com/pkg/discovery"
 	"movieexample.com/rating/pkg/model"
 )
 
 // Gateway defines an HTTP gateway for movie rating service
 type Gateway struct {
-	addr string
+	registery discovery.Registery
 }
 
 // New creates a new HTTP gateway for movie rating service
-func New(addr string) *Gateway {
-	return &Gateway{addr}
+func New(registery discovery.Registery) *Gateway {
+	return &Gateway{registery}
 }
 
 // GetAggregatedRating returns the aggregated rating for a record.
 // It returns ErrNotFound if there are no ratings for it.
 func (g *Gateway) GetAggregatedRating(ctx context.Context, recordID model.RecordID, recordType model.RecordType) (float64, error) {
-	req, err := http.NewRequest(http.MethodGet, g.addr+"/rating", nil)
+	addrs, err := g.registery.Discover(ctx, "rating")
+	if err != nil {
+		return 0, err
+	}
+	if len(addrs) == 0 {
+		return 0, fmt.Errorf("no rating service instances available")
+	}
+
+	url := "http://" + addrs[rand.Intn(len(addrs))] + "/rating"
+	log.Printf("Calling rating service. Request: GET %s\n", url)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +69,18 @@ func (g *Gateway) GetAggregatedRating(ctx context.Context, recordID model.Record
 
 // PutRating writes a rating
 func (g *Gateway) PutRating(ctx context.Context, recordID model.RecordID, recordType model.RecordType, userId model.UserID, value model.RatingValue) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, g.addr+"/rating", nil)
+	addrs, err := g.registery.Discover(ctx, "rating")
+	if err != nil {
+		return err
+	}
+	if len(addrs) == 0 {
+		return fmt.Errorf("no rating service instances available")
+	}
+
+	url := "http://" + addrs[rand.Intn(len(addrs))] + "/rating"
+	log.Printf("Calling rating service. Request: PUT %s\n", url)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, nil)
 	if err != nil {
 		return err
 	}

@@ -4,26 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"math/rand"
 	"net/http"
 
 	"movieexample.com/metadata/pkg/model"
 	"movieexample.com/movie/internal/gateway"
+	"movieexample.com/pkg/discovery"
 )
 
 // Gateway defines an HTTP gateway for movie metadata service
 type Gateway struct {
-	addr string
+	registery discovery.Registery
 }
 
 // New creates a new HTTP gateway for movie metadata service
-func New(addr string) *Gateway {
-	return &Gateway{addr: addr}
+func New(registery discovery.Registery) *Gateway {
+	return &Gateway{registery}
 }
 
 // Get retrieves movie metadata by movie id
 func (g *Gateway) Get(ctx context.Context, id string) (*model.Metadata, error) {
 	// Create a new HTTP request
-	req, err := http.NewRequest(http.MethodGet, g.addr+"/metadata", nil)
+	addrs, err := g.registery.Discover(ctx, "metadata")
+	if err != nil {
+		return nil, err
+	}
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("no metadata service instances available")
+	}
+
+	url := "http://" + addrs[rand.Intn(len(addrs))] + "/metadata"
+	log.Printf("Calling metadata service. Request: GET %s\n", url)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
