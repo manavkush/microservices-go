@@ -4,6 +4,8 @@ go 1.21.1
 
 require github.com/hashicorp/consul/api v1.27.0
 
+require google.golang.org/protobuf v1.32.0
+
 require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/fatih/color v1.14.1 // indirect

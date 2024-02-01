@@ -3,7 +3,7 @@ There are different branches for each step. The branches are incremental i.e. **
 **The movieapp contains 3 services that enable the users to rate any movie(actors, etc coming soon)**
 
 To run the hashicorp/consul, do the following
-```
+```bash
 docker run \                                                                                                                                                                 
     -d \
     -p 8500:8500 \
@@ -14,7 +14,7 @@ docker run \
 ```
 
 To run the app do the following in different terminals:
-```
+```bash
 go run metadata/cmd/*.go
 go run rating/cmd/*.go
 go run movie/cmd/*.go
