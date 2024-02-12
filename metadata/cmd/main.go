@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"time"
 
+	"google.golang.org/grpc"
+	"movieexample.com/gen"
 	"movieexample.com/metadata/internal/controller/metadata"
-	httpHandler "movieexample.com/metadata/internal/handler/http"
+	grpcHandler "movieexample.com/metadata/internal/handler/grpc"
 	"movieexample.com/metadata/internal/repository/memory"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
@@ -46,11 +48,15 @@ func main() {
 	defer registery.Deregister(ctx, instanceID, serviceName)
 
 	repo := memory.New()
-	ctrl := metadata.New(repo)
-	h := httpHandler.New(ctrl)
-
-	http.Handle("/metadata", http.HandlerFunc(h.GetMetadata))
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
+	svc := metadata.New(repo)
+	h := grpcHandler.New(svc)
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+	if err != nil {
+		log.Fatal("failed to listen: %v", err)
+	}
+	srv := grpc.NewServer()
+	gen.RegisterMetadataServiceServer(srv, h)
+	if err := srv.Serve(lis); err != nil {
 		panic(err)
 	}
 }

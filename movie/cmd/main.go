@@ -5,13 +5,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"net"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"movieexample.com/gen"
 	"movieexample.com/movie/internal/controller/movie"
-	metadataGateway "movieexample.com/movie/internal/gateway/metadata/http"
-	ratingGateway "movieexample.com/movie/internal/gateway/rating/http"
-	httpHandler "movieexample.com/movie/internal/handler/http"
+	metadataGateway "movieexample.com/movie/internal/gateway/metadata/grpc"
+	ratingGateway "movieexample.com/movie/internal/gateway/rating/grpc"
+	grpcHanlder "movieexample.com/movie/internal/handler/grpc"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
 )
@@ -49,11 +52,17 @@ func main() {
 	log.Printf("Starting the movie service at port: %d\n", port)
 	metadataGateway := metadataGateway.New(registery)
 	ratingGateway := ratingGateway.New(registery)
-
 	ctrl := movie.New(ratingGateway, metadataGateway)
-	h := httpHandler.New(ctrl)
-	http.Handle("/movie", http.HandlerFunc(h.GetMovieDetails))
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		panic(err)
+	h := grpcHanlder.New(ctrl)
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+	if err != nil {
+		log.Fatal("failed to listen: err")
+	}
+
+	srv := grpc.NewServer()
+	reflection.Register(srv)
+	gen.RegisterMovieServiceServer(srv, h)
+	if err := srv.Serve(lis); err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
 }

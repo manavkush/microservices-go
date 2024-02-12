@@ -3,6 +3,7 @@ package movie
 import (
 	"context"
 	"errors"
+	"log"
 
 	metadataModel "movieexample.com/metadata/pkg/model"
 	"movieexample.com/movie/internal/gateway"
@@ -15,7 +16,7 @@ var ErrNotFound = errors.New("movie metadata not found")
 
 type ratingGateway interface {
 	GetAggregatedRating(ctx context.Context, recordID ratingModel.RecordID, recordType ratingModel.RecordType) (float64, error)
-	PutRating(ctx context.Context, recordID ratingModel.RecordID, recordType ratingModel.RecordType, userId ratingModel.UserID, value ratingModel.RatingValue) error
+	// PutRating(ctx context.Context, recordID ratingModel.RecordID, recordType ratingModel.RecordType, userId ratingModel.UserID, value ratingModel.RatingValue) error
 }
 
 type metadataGateway interface {
@@ -38,12 +39,18 @@ func New(ratingGateway ratingGateway, metadataGateway metadataGateway) *Controll
 
 // Get returns the movie details including the aggregated rating and the movie metadata.
 func (c *Controller) Get(ctx context.Context, id string) (*model.MovieDetails, error) {
+	log.Printf("Movie Controller: Get called: %v", id)
 	metadata, err := c.metadataGateway.Get(ctx, id)
+
 	if err != nil && errors.Is(err, gateway.ErrNotFound) {
+		log.Printf("Movie Controller: Not found: %v", err)
 		return nil, ErrNotFound
 	} else if err != nil {
+		log.Printf("Movie Controller: Internal Error: %v", err)
 		return nil, err
 	}
+	log.Printf("Movie Controller: Found the movie: %v", metadata)
+
 	details := &model.MovieDetails{Metadata: *metadata}
 	rating, err := c.ratingGateway.GetAggregatedRating(ctx, ratingModel.RecordID(id), ratingModel.RecordMovieType)
 	if err != nil && errors.Is(err, gateway.ErrNotFound) {
