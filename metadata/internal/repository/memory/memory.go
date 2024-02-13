@@ -32,9 +32,11 @@ func (r *Repository) Get(ctx context.Context, id string) (*model.Metadata, error
 }
 
 // Put stores the movie metadata for a given movie id
-func (r *Repository) Put(ctx context.Context, id string, metadata *model.Metadata) error {
+func (r *Repository) Put(ctx context.Context, metadata *model.Metadata) error {
 	r.Lock()
 	defer r.Unlock()
+
+	id := metadata.ID
 
 	r.data[id] = metadata
 	return nil

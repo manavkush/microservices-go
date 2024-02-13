@@ -29,12 +29,15 @@ func (h *Handler) GetMovieDetails(ctx context.Context, req *gen.GetMovieDetailsR
 	m, err := h.ctrl.Get(ctx, req.MovieId)
 
 	// Handle the errors returned by the grpc response
-	if e, ok := status.FromError(err); ok {
-		switch e.Code() {
-		case codes.NotFound:
-			return nil, status.Errorf(codes.NotFound, err.Error())
-		default:
-			return nil, status.Errorf(codes.Internal, err.Error())
+	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			switch e.Code() {
+			case codes.NotFound:
+				return nil, status.Errorf(codes.NotFound, err.Error())
+			default:
+				log.Printf("GetMovieDetails failed: Err: %v\n", err)
+				return nil, status.Errorf(codes.Internal, err.Error())
+			}
 		}
 	}
 

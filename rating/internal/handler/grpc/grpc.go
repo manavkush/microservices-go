@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,18 +23,19 @@ func New(ctrl *rating.Controller) *Handler {
 	return &Handler{svc: ctrl}
 }
 
-// GetAggregateRating returns the aggregated rating for a record.
-func (h *Handler) GetAggregateRating(ctx context.Context, req *gen.GetAggregatedRatingRequest) (*gen.GetAggregatedRatingResponse, error) {
+// GetAggregatedRating returns the aggregated rating for a record.
+func (h *Handler) GetAggregatedRating(ctx context.Context, req *gen.GetAggregatedRatingRequest) (*gen.GetAggregatedRatingResponse, error) {
 	if req.RecordId == "" || req.RecordType == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "empty record id or record type")
 	}
-	val, err := h.svc.GetAggregatedRatings(ctx, model.RecordID(req.RecordId), model.RecordType(req.RecordType))
+	val, err := h.svc.GetAggregatedRating(ctx, model.RecordID(req.RecordId), model.RecordType(req.RecordType))
 	if err != nil && errors.Is(err, rating.ErrNotFound) {
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
+	log.Printf("GetAggregated rating: %v for recordId: %v recordType: %v\n", val, req.RecordId, req.RecordType)
 	return &gen.GetAggregatedRatingResponse{RatingValue: val}, nil
 }
 

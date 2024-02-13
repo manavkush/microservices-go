@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"log"
 
 	"movieexample.com/gen"
 	"movieexample.com/internal/grpcutil"
@@ -27,8 +28,10 @@ func (g *Gateway) GetAggregatedRating(ctx context.Context, recordID model.Record
 	}
 	defer conn.Close()
 
+	log.Println("Connecting to rating service for GetAggregatedRating")
 	client := gen.NewRatingServiceClient(conn)
 	resp, err := client.GetAggregatedRating(ctx, &gen.GetAggregatedRatingRequest{RecordId: string(recordID), RecordType: string(recordType)})
+	log.Printf("GetAggregatedRating response: %v\n", resp)
 	if err != nil {
 		return 0, err
 	}
@@ -37,8 +40,10 @@ func (g *Gateway) GetAggregatedRating(ctx context.Context, recordID model.Record
 
 // PutRating adds a rating for a record
 func (g *Gateway) PutRating(ctx context.Context, recordID model.RecordID, recordType model.RecordType, userID model.UserID, value model.RatingValue) error {
+	log.Println("Connecting to rating service for PutRating")
 	conn, err := grpcutil.ServiceConnection(ctx, "rating", g.registry)
 	if err != nil {
+		log.Printf("Error connecting to rating service for PutRating: %v\n", err)
 		return err
 	}
 	defer conn.Close()

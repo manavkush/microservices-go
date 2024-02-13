@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"log"
 
 	"movieexample.com/rating/internal/repository"
 	"movieexample.com/rating/pkg/model"
@@ -28,6 +29,7 @@ func (r *Repository) Get(ctx context.Context, recordId model.RecordID, recordTyp
 		return nil, repository.ErrNotFound
 	}
 
+	log.Printf("Found ratings: %v for recordId: %v recordType: %v\n", r.data[recordType][recordId], recordId, recordType)
 	return r.data[recordType][recordId], nil
 }
 
@@ -38,5 +40,6 @@ func (r *Repository) Put(ctx context.Context, recordId model.RecordID, recordTyp
 	}
 
 	r.data[recordType][recordId] = append(r.data[recordType][recordId], *rating)
+	log.Printf("Added rating: %v for recordId: %v recordType: %v\n", rating, recordId, recordType)
 	return nil
 }

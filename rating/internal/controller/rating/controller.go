@@ -3,6 +3,7 @@ package rating
 import (
 	"context"
 	"errors"
+	"log"
 
 	"movieexample.com/rating/internal/repository"
 	"movieexample.com/rating/pkg/model"
@@ -26,11 +27,13 @@ func New(repo ratingRepository) *Controller {
 	return &Controller{repo}
 }
 
-// GetAggregatedRatings returns the aggregated rating for a
+// GetAggregatedRating returns the aggregated rating for a
 // record or ErrNotFound if there are no ratings for it
-func (c *Controller) GetAggregatedRatings(ctx context.Context, recordId model.RecordID, recordType model.RecordType) (float64, error) {
+func (c *Controller) GetAggregatedRating(ctx context.Context, recordId model.RecordID, recordType model.RecordType) (float64, error) {
+	log.Printf("GetAggregatedRating called for recordId: %v recordType: %v\n", recordId, recordType)
 	ratings, err := c.repo.Get(ctx, recordId, recordType)
 	if err != nil && errors.Is(err, repository.ErrNotFound) {
+		log.Printf("No ratings found for recordId: %v recordType: %v\n", recordId, recordType)
 		return 0, ErrNotFound
 	} else if err != nil {
 		return 0, err
@@ -42,6 +45,7 @@ func (c *Controller) GetAggregatedRatings(ctx context.Context, recordId model.Re
 		sum += float64(record.Value)
 	}
 
+	log.Printf("Aggregated rating: %v for recordId: %v recordType: %v\n", sum/float64(len(ratings)), recordId, recordType)
 	return sum / (float64(len(ratings))), nil
 }
 

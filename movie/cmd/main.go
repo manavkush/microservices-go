@@ -14,7 +14,7 @@ import (
 	"movieexample.com/movie/internal/controller/movie"
 	metadataGateway "movieexample.com/movie/internal/gateway/metadata/grpc"
 	ratingGateway "movieexample.com/movie/internal/gateway/rating/grpc"
-	grpcHanlder "movieexample.com/movie/internal/handler/grpc"
+	grpcHandler "movieexample.com/movie/internal/handler/grpc"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
 )
@@ -53,7 +53,9 @@ func main() {
 	metadataGateway := metadataGateway.New(registery)
 	ratingGateway := ratingGateway.New(registery)
 	ctrl := movie.New(ratingGateway, metadataGateway)
-	h := grpcHanlder.New(ctrl)
+
+	// New Code
+	h := grpcHandler.New(ctrl)
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
 	if err != nil {
 		log.Fatal("failed to listen: err")
