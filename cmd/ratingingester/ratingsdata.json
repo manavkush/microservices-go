@@ -1,0 +1,18 @@
+[
+    {
+        "userId":"105",
+        "recordId":"1",
+        "recordType": "movie",
+        "ratingValue": 5,
+        "providerId":"test-provider",
+        "eventType":"put"
+    },
+    {
+        "userId":"105",
+        "recordId":"2",
+        "recordType": "movie",
+        "ratingValue": 4,
+        "providerId":"test-provider",
+        "eventType":"put"
+    }
+]

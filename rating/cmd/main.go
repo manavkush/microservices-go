@@ -14,7 +14,9 @@ import (
 	"movieexample.com/pkg/discovery/consul"
 	"movieexample.com/rating/internal/controller/rating"
 	grpcHandler "movieexample.com/rating/internal/handler/grpc"
+	"movieexample.com/rating/internal/ingester/kafka"
 	"movieexample.com/rating/internal/repository/memory"
+	"movieexample.com/rating/pkg/model"
 )
 
 const serviceName = "rating"
@@ -48,9 +50,40 @@ func main() {
 	defer registery.Deregister(ctx, instanceID, serviceName)
 
 	repo := memory.New()
-	ctrl := rating.New(repo)
+	ingester, err := kafka.NewIngester("localhost", "rating", "ratings")
+	if err != nil {
+		log.Fatalf("Failed to create ingester: %s\n", err)
+		ingester = nil
+	}
+	ctrl := rating.New(repo, ingester)
 
-	// New Code
+	// Start the ingester in a separate go routine
+	// This will keep trying to ingest the rating events from the kafka topic every 10 seconds
+	go func() {
+		for {
+			ratingEventChannel, err := ingester.Ingest(ctx)
+			if err != nil {
+				log.Fatalf("Failed to ingest: %s\n", err)
+			}
+			for ratingEvent := range ratingEventChannel {
+				// Put the rating event in the repository
+				recordId := ratingEvent.RecordID
+				recordType := ratingEvent.RecordType
+				rating := &model.Rating{
+					RecordID:   ratingEvent.RecordID,
+					RecordType: ratingEvent.RecordType,
+					UserID:     ratingEvent.UserID,
+					Value:      ratingEvent.Value,
+				}
+				log.Printf("Putting rating: %v for recordId: %s recordType: %s\n", rating, recordId, recordType)
+				err := ctrl.PutRating(ctx, recordId, recordType, rating)
+				if err != nil {
+					log.Fatalf("Failed to put rating: %s\n", err)
+				}
+			}
+			time.Sleep(10 * time.Second)
+		}
+	}()
 
 	h := grpcHandler.New(ctrl)
 

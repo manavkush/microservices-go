@@ -40,6 +40,6 @@ func (r *Repository) Put(ctx context.Context, recordId model.RecordID, recordTyp
 	}
 
 	r.data[recordType][recordId] = append(r.data[recordType][recordId], *rating)
-	log.Printf("Added rating: %v for recordId: %v recordType: %v\n", rating, recordId, recordType)
+	log.Printf("Added rating: %v for recordId: %s recordType: %s\n", rating, recordId, recordType)
 	return nil
 }

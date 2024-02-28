@@ -35,7 +35,7 @@ func (h *Handler) GetAggregatedRating(ctx context.Context, req *gen.GetAggregate
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	log.Printf("GetAggregated rating: %v for recordId: %v recordType: %v\n", val, req.RecordId, req.RecordType)
+	log.Printf("GetAggregatedResponse rating: %v for recordId: %v recordType: %v\n", val, req.RecordId, req.RecordType)
 	return &gen.GetAggregatedRatingResponse{RatingValue: val}, nil
 }
 
